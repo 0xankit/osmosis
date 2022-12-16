@@ -269,6 +269,17 @@ func (appKeepers *AppKeepers) InitNormalKeepers(
 		appKeepers.BankKeeper, appKeepers.DistrKeeper)
 	appKeepers.GAMMKeeper = &gammKeeper
 
+	appKeepers.SwapRouterKeeper = swaprouter.NewKeeper(
+		appKeepers.keys[swaproutertypes.StoreKey],
+		appKeepers.GetSubspace(swaproutertypes.ModuleName),
+		appKeepers.GAMMKeeper,
+		nil,
+		appKeepers.BankKeeper,
+		appKeepers.AccountKeeper,
+		appKeepers.DistrKeeper,
+	)
+	appKeepers.GAMMKeeper.SetPoolCreationManager(appKeepers.SwapRouterKeeper)
+
 	appKeepers.TwapKeeper = twap.NewKeeper(
 		appKeepers.keys[twaptypes.StoreKey],
 		appKeepers.tkeys[twaptypes.TransientStoreKey],
@@ -287,14 +298,14 @@ func (appKeepers *AppKeepers) InitNormalKeepers(
 	protorevKeeper := protorevkeeper.NewKeeper(
 		appCodec, appKeepers.keys[protorevtypes.StoreKey],
 		appKeepers.GetSubspace(protorevtypes.ModuleName),
-		appKeepers.AccountKeeper, appKeepers.BankKeeper, appKeepers.GAMMKeeper, appKeepers.EpochsKeeper)
+		appKeepers.AccountKeeper, appKeepers.BankKeeper, appKeepers.GAMMKeeper, appKeepers.EpochsKeeper, appKeepers.SwapRouterKeeper)
 	appKeepers.ProtoRevKeeper = &protorevKeeper
 
 	txFeesKeeper := txfeeskeeper.NewKeeper(
 		appKeepers.AccountKeeper,
 		appKeepers.BankKeeper,
 		appKeepers.keys[txfeestypes.StoreKey],
-		appKeepers.GAMMKeeper,
+		appKeepers.SwapRouterKeeper,
 		appKeepers.GAMMKeeper,
 	)
 	appKeepers.TxFeesKeeper = &txFeesKeeper
@@ -336,6 +347,7 @@ func (appKeepers *AppKeepers) InitNormalKeepers(
 	)
 	appKeepers.PoolIncentivesKeeper = &poolIncentivesKeeper
 	appKeepers.GAMMKeeper.SetPoolIncentivesKeeper(appKeepers.PoolIncentivesKeeper)
+	appKeepers.SwapRouterKeeper.SetPoolIncentivesKeeper(appKeepers.PoolIncentivesKeeper)
 
 	tokenFactoryKeeper := tokenfactorykeeper.NewKeeper(
 		appKeepers.keys[tokenfactorytypes.StoreKey],
@@ -345,17 +357,6 @@ func (appKeepers *AppKeepers) InitNormalKeepers(
 		appKeepers.DistrKeeper,
 	)
 	appKeepers.TokenFactoryKeeper = &tokenFactoryKeeper
-
-	appKeepers.SwapRouterKeeper = swaprouter.NewKeeper(
-		appKeepers.keys[swaproutertypes.StoreKey],
-		appKeepers.GetSubspace(swaproutertypes.ModuleName),
-		appKeepers.GAMMKeeper,
-		nil,
-		appKeepers.BankKeeper,
-		appKeepers.AccountKeeper,
-		appKeepers.DistrKeeper,
-	)
-	appKeepers.GAMMKeeper.SetPoolCreationManager(appKeepers.SwapRouterKeeper)
 
 	validatorSetPreferenceKeeper := valsetpref.NewKeeper(
 		appKeepers.keys[valsetpreftypes.StoreKey],
