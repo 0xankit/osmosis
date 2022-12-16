@@ -67,7 +67,7 @@ func (k Keeper) CalculateSpotPrice(
 // to reflect the newly created GAMM share denomination.
 // LEGACY, consider removing in subsequent PR
 func (k Keeper) CreatePool(ctx sdk.Context, msg swaproutertypes.CreatePoolMsg) (uint64, error) {
-	poolId, err := k.poolCreationManager.CreatePool(ctx, msg)
+	poolId, err := k.poolManager.CreatePool(ctx, msg)
 	if err != nil {
 		return 0, err
 	}
