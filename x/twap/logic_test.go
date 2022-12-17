@@ -1340,6 +1340,7 @@ func (s *TestSuite) TestComputeArithmeticTwapWithSpotPriceError() {
 			endRecord:   newOneSidedRecordWErrorTime(tPlusOne, OneSec, true, tPlusOne),
 			quoteAsset:  denom0,
 			expTwap:     sdk.OneDec(),
+			expErr:      true,
 		},
 		// should error, since start time may have been used to interpolate this value
 		"err at StartTime exactly from end record": {
@@ -1347,6 +1348,7 @@ func (s *TestSuite) TestComputeArithmeticTwapWithSpotPriceError() {
 			endRecord:   newOneSidedRecordWErrorTime(tPlusOne, OneSec, true, baseTime),
 			quoteAsset:  denom0,
 			expTwap:     sdk.OneDec(),
+			expErr:      true,
 		},
 		// should error, since start record is erroneous
 		"err at StartTime exactly from start record": {
@@ -1354,12 +1356,14 @@ func (s *TestSuite) TestComputeArithmeticTwapWithSpotPriceError() {
 			endRecord:   newOneSidedRecord(tPlusOne, OneSec, true),
 			quoteAsset:  denom0,
 			expTwap:     sdk.OneDec(),
+			expErr:      true,
 		},
 		"err before StartTime": {
 			startRecord: newOneSidedRecord(baseTime, sdk.ZeroDec(), true),
 			endRecord:   newOneSidedRecordWErrorTime(tPlusOne, OneSec, true, tMinOne),
 			quoteAsset:  denom0,
 			expTwap:     sdk.OneDec(),
+			expErr:      false,
 		},
 		// Should not happen, but if it did would error
 		"err after EndTime": {
@@ -1367,14 +1371,15 @@ func (s *TestSuite) TestComputeArithmeticTwapWithSpotPriceError() {
 			endRecord:   newOneSidedRecordWErrorTime(tPlusOne, OneSec.MulInt64(2), true, baseTime.Add(20*time.Second)),
 			quoteAsset:  denom0,
 			expTwap:     sdk.OneDec().MulInt64(2),
+			expErr:      true,
 		},
 	}
 	for name, test := range tests {
 		s.Run(name, func() {
 			arithmeticStrategy := &twap.ArithmeticTwapStrategy{*s.App.TwapKeeper}
 			actualTwap, err := twap.ComputeTwap(test.startRecord, test.endRecord, test.quoteAsset, arithmeticStrategy)
-			s.Require().NoError(err)
 			s.Require().Equal(test.expTwap, actualTwap)
+			osmoassert.ConditionalError(s.T(), test.expErr, err)
 		})
 	}
 }
@@ -1412,5 +1417,6 @@ type computeTwapTestCase struct {
 	twapStrategies []twap.TwapStrategy
 	quoteAsset     string
 	expTwap        sdk.Dec
+	expErr         bool
 	expPanic       bool
 }
